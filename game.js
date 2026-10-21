@@ -19,7 +19,7 @@ let MENU=[],meta={},s,timer,cur,t0,locked=true;
 
 const yen=n=>"¥"+n.toLocaleString("ja-JP");
 const label=m=>m.name+(m.variant?`（${m.variant}）`:"");
-function show(id){["title","game","result"].forEach(x=>$(x).classList.toggle("hide",x!==id));$("note").classList.toggle("hide",id==="game")}
+function show(id){["title","game","result","ranking"].forEach(x=>$(x).classList.toggle("hide",x!==id));$("note").classList.toggle("hide",id==="game")}
 function best(){try{return +localStorage.getItem("saize-best")||0}catch(e){return 0}}
 function setBest(v){try{localStorage.setItem("saize-best",v)}catch(e){}}
 function restart(el,cls){el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls)}
@@ -208,6 +208,7 @@ function end(){
   if(nb){setBest(s.score);$("r-score").textContent+=" NEW!"}
   $("best").textContent=best();
   s.total=total;
+  $("entry").classList.remove("done");$("entry-btn").disabled=false;$("entry-msg").textContent="";
 }
 function share(){
   const text=`サイゼの注文番号をノーヒントで書いたら ${s.ok}/${s.r}問正解、スコア${s.score}点、お会計${yen(s.total)}でした。「${$("rank").textContent}」 #サイゼ注文番号ノーヒント`;
@@ -221,5 +222,48 @@ $("host").onclick=()=>{Snd.voice("welcome");face("smile",$("host").querySelector
 document.addEventListener("pointerdown",()=>Snd.warm(),{once:true});
 $("again").onclick=start;
 $("share").onclick=share;
+
+// ---- ランキング ----
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
+let backTo="title",period="all",mine=null;
+function savedName(){try{return localStorage.getItem("saize-name")||""}catch(e){return""}}
+$("rank-title").textContent=Rank.remote?"全国ランキング":"この端末のランキング";
+$("entry-label").textContent=Rank.remote?"全国ランキングに登録":"ランキングに登録（この端末）";
+function openRanking(from){backTo=from;show("ranking");loadBoard()}
+async function loadBoard(){
+  document.querySelectorAll(".tab").forEach(t=>{const on=t.dataset.period===period;t.classList.toggle("on",on);t.setAttribute("aria-selected",on)});
+  const b=$("board");b.innerHTML=`<li class="empty">読み込み中…</li>`;
+  try{
+    const rows=await Rank.list(period);
+    let marked=false;
+    b.innerHTML=rows.length?rows.map((r,i)=>{
+      const me=!marked&&mine&&r.name===mine.name&&r.score===mine.score&&(marked=true);
+      return `<li class="${me?"me":""}"><span class="no">${["🥇","🥈","🥉"][i]||i+1}</span>`+
+        `<span class="who">${esc(r.name)}<small>${r.correct}/10問正解 ・ ${new Date(r.created_at).toLocaleDateString("ja-JP")}</small></span>`+
+        `<span class="pt">${r.score}</span></li>`}).join("")
+      :`<li class="empty">まだ誰も注文していません</li>`;
+  }catch(e){b.innerHTML=`<li class="empty">ランキングを読み込めませんでした</li>`}
+}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{period=t.dataset.period;loadBoard()});
+$("to-rank").onclick=()=>openRanking("title");
+$("r-rank").onclick=()=>openRanking("result");
+$("rank-back").onclick=()=>show(backTo);
+$("name").value=savedName();
+$("entry").onsubmit=async e=>{
+  e.preventDefault();
+  const name=$("name").value.trim();
+  if(!name||s.submitted)return;
+  try{localStorage.setItem("saize-name",name)}catch(err){}
+  s.submitted=true;$("entry-btn").disabled=true;$("entry-msg").textContent="登録中…";
+  try{
+    const {rank}=await Rank.submit({name,score:s.score,correct:s.ok,bill:s.total});
+    mine={name,score:s.score};
+    $("entry").classList.add("done");
+    $("entry-msg").innerHTML=rank?`${esc(name)} さんは ${Rank.remote?"全国":""} <b>${rank}</b> 位です！`:"登録しました！";
+  }catch(err){
+    s.submitted=false;$("entry-btn").disabled=false;
+    $("entry-msg").textContent="登録できませんでした。時間をおいて試してください。";
+  }
+};
 $("mute").textContent=Snd.muted?"🔇":"🔊";
 $("mute").onclick=e=>{$("mute").textContent=Snd.toggle()?"🔇":"🔊";e.currentTarget.blur()};

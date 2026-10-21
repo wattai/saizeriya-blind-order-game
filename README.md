@@ -10,6 +10,17 @@
 - 店員さんのボイスは [Irodori-TTS](https://github.com/Aratako/Irodori-TTS)（MIT）でキャプションから声をデザインして生成した AI 合成音声
 - イラスト: [いらすとや](https://www.irasutoya.com/)（利用規約に沿って20点以内で使用）
 
+## 全国ランキング（Supabase）
+
+`config.js` が空のときは「この端末のランキング」（localStorage）として動きます。全国ランキングにするには:
+
+1. [Supabase](https://supabase.com/) で無料プロジェクトを作る
+2. SQL Editor で `supabase/schema.sql` を実行（テーブル作成と、閲覧・登録のみ許可する RLS）
+3. Project Settings → API Keys の **Project URL** と **anon / publishable key** を `config.js` に書く
+
+anon / publishable キーはブラウザに公開する前提のキーです（`service_role` / secret キーは絶対に入れないでください）。
+スコアはサーバー側で「名前1〜12文字」「0〜15000点」「正解数×1650点以下」をチェックしますが、ブラウザから直接送るため完全な不正対策ではありません。
+
 ## メニューデータの更新
 
 `menu.json` はサイゼリヤ公式サイトの「人気メニュー」ページから生成しています。
