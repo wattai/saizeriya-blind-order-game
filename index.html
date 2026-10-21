@@ -2,183 +2,106 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f0d">
 <title>サイゼ注文番号 ノーヒント</title>
-<style>
-:root{--g:#1a7a3c;--r:#d6232a;--cream:#fff8e7;--ink:#2b2b2b}
-*{box-sizing:border-box}
-body{margin:0;font-family:"Hiragino Sans","Meiryo",sans-serif;background:repeating-conic-gradient(#fff 0 25%,#f3e6e6 0 50%) 0 0/48px 48px;color:var(--ink);min-height:100vh;display:flex;justify-content:center}
-main{width:100%;max-width:520px;padding:16px}
-h1{background:var(--g);color:#fff;margin:0 0 12px;padding:12px;border-radius:12px;text-align:center;font-size:1.3rem;border-bottom:4px solid var(--r)}
-.card{background:var(--cream);border:3px solid var(--g);border-radius:14px;padding:16px;margin-bottom:12px}
-.hide{display:none}
-button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:12px 18px;background:var(--r);color:#fff;font-weight:700;font-size:1.05rem}
-button.sub{background:var(--g)}
-button:active{transform:translateY(2px)}
-.stat{display:flex;justify-content:space-between;font-weight:700;margin-bottom:8px}
-.slip{background:#fff;border:2px dashed #999;padding:12px;border-radius:6px;font-size:1.2rem;text-align:center}
-.slip b{font-size:1.5rem;color:var(--r)}
-.slip small{display:block;color:#777;margin-top:4px}
-.bar{height:10px;background:#ddd;border-radius:6px;overflow:hidden;margin:8px 0}
-.bar i{display:block;height:100%;background:var(--g);width:100%}
-input{width:100%;font-size:2rem;text-align:center;letter-spacing:.3em;padding:10px;border:3px solid var(--g);border-radius:10px;margin:10px 0}
-.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.pad button{background:var(--g);font-size:1.4rem;padding:14px}
-.pad .del{background:#777}.pad .ok{background:var(--r)}
-.fb{min-height:3.2em;text-align:center;font-weight:700;margin-top:10px}
-.ok-t{color:var(--g)}.ng-t{color:var(--r)}
-.plate{font-size:4rem;text-align:center;transition:transform .3s}
-.shake{animation:sh .4s}
-@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
-.note{font-size:.8rem;color:#666;text-align:center}
-.mem{font-size:.9rem;line-height:1.6}
-</style>
+<meta name="description" content="サイゼリヤの注文番号をノーヒントで入力するギャグゲーム">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E🍝%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
+<canvas id="fx"></canvas>
+<div class="glow g1"></div><div class="glow g2"></div>
+
 <main>
-<h1>🍅 サイゼ注文番号 ノーヒント 🍅</h1>
+  <header class="top">
+    <div class="brand"><span class="flag"><i></i><i></i><i></i></span>BLIND ORDER</div>
+    <button id="mute" class="icon" aria-label="音のオン・オフ">🔊</button>
+  </header>
 
-<section id="title" class="card">
-  <p>サイゼリヤの注文用紙に書く<b>メニュー番号</b>を、<b>ヒント一切なし</b>で入力せよ。</p>
-  <p>覚えているか、勘か、運か。間違えると<b>全然違う料理</b>が届くぞ。</p>
-  <p class="mem" id="best"></p>
-  <button id="start">注文を始める</button>
-</section>
+  <!-- タイトル -->
+  <section id="title" class="screen">
+    <div class="hero">
+      <p class="kicker">SAIZERIYA ORDER CHALLENGE</p>
+      <h1><span>注文番号</span><em>ノーヒント</em></h1>
+      <p class="lead">メニュー表なし。ヒントなし。<br>記憶と勘だけで、4桁の番号を書け。</p>
+    </div>
+    <div class="sheet tilt" aria-hidden="true">
+      <div class="sheet-head">ご注文用紙 <span>No.</span></div>
+      <div class="digits demo"><b>?</b><b>?</b><b>?</b><b>?</b></div>
+      <div class="sheet-foot">番号 × 数量</div>
+    </div>
+    <div class="stats">
+      <div><small>HIGH SCORE</small><strong id="best">0</strong></div>
+      <div><small>収録メニュー</small><strong id="count">–</strong></div>
+    </div>
+    <button id="start" class="cta" disabled>読み込み中…</button>
+    <p class="rules">全10品 ・ 1品15秒 ・ ミス3回で退店<br>3秒ごとに番号が1桁ずつ見えてくる。<b>早く答えるほど高得点</b><br>間違えると<b>その番号の料理</b>が届きます</p>
+  </section>
 
-<section id="game" class="card hide">
-  <div class="stat"><span id="round"></span><span id="score"></span><span id="lives"></span></div>
-  <div class="slip" id="slip"></div>
-  <div class="bar"><i id="bar"></i></div>
-  <div class="plate" id="plate">📝</div>
-  <input id="inp" inputmode="numeric" maxlength="4" readonly placeholder="????">
-  <div class="pad" id="pad"></div>
-  <div class="fb" id="fb"></div>
-</section>
+  <!-- ゲーム -->
+  <section id="game" class="screen hide">
+    <div class="hud">
+      <div class="chip"><small>ROUND</small><b id="round">1/10</b></div>
+      <div class="chip"><small>SCORE</small><b id="score">0</b></div>
+      <div class="chip"><small>LIFE</small><b id="lives"></b></div>
+    </div>
 
-<section id="result" class="card hide">
-  <h2 id="rank" style="margin-top:0"></h2>
-  <p id="sum"></p>
-  <button id="again">もう一度注文する</button>
-</section>
+    <div class="stage">
+      <div class="ticket" id="ticket">
+        <div class="ticket-top"><span>ORDER</span><span id="price"></span></div>
+        <div class="dish" id="dish"></div>
+        <div class="variant" id="variant"></div>
+        <div class="qty">× <b id="qty">1</b></div>
+      </div>
+      <div class="plate-wrap">
+        <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="54" class="ring-bg"/>
+          <circle cx="60" cy="60" r="54" class="ring-fg" id="ring"/>
+        </svg>
+        <div class="plate" id="plate">🍽️</div>
+        <div class="combo" id="combo"></div>
+      </div>
+    </div>
 
-<p class="note">※ 番号はゲーム内の目安です。実店舗のメニュー番号と異なる場合があります。非公式ファンゲーム。</p>
+    <div class="meter">
+      <span id="hints" class="hints">ノーヒント</span>
+      <span class="gain">獲得 <b id="pts">+0</b></span>
+    </div>
+    <div class="digits" id="digits"><b></b><b></b><b></b><b></b></div>
+    <div class="toast" id="toast"></div>
+
+    <div class="pad" id="pad"></div>
+  </section>
+
+  <!-- 結果 -->
+  <section id="result" class="screen hide">
+    <p class="kicker">RESULT</p>
+    <h2 class="rank" id="rank"></h2>
+    <div class="receipt">
+      <div class="r-head">
+        <strong>サイゼリヤ（たぶん）</strong>
+        <small id="r-date"></small>
+      </div>
+      <ul id="r-items"></ul>
+      <div class="r-row total"><span>お会計</span><span id="r-total"></span></div>
+      <div class="r-row"><span>正解</span><span id="r-ok"></span></div>
+      <div class="r-row"><span>SCORE</span><span id="r-score"></span></div>
+      <p class="r-msg" id="r-msg"></p>
+    </div>
+    <div class="actions">
+      <button id="again" class="cta">もう一度注文する</button>
+      <button id="share" class="ghost">結果をシェア</button>
+    </div>
+  </section>
+
+  <footer class="note" id="note">非公式ファンゲーム。番号は店舗・時期により異なる場合があります。</footer>
 </main>
-<script>
-const MENU=[
- {n:"ミラノ風ドリア",c:"1201",e:"🍚"},
- {n:"辛味チキン",c:"1304",e:"🍗"},
- {n:"小エビのサラダ",c:"1101",e:"🥗"},
- {n:"ペペロンチーノ",c:"1405",e:"🍝"},
- {n:"ミートソース",c:"1402",e:"🍝"},
- {n:"マルゲリータピザ",c:"1501",e:"🍕"},
- {n:"柔らか青豆の温サラダ",c:"1103",e:"🫛"},
- {n:"ティラミス",c:"1601",e:"🍰"},
- {n:"プリン",c:"1604",e:"🍮"},
- {n:"ドリンクバー",c:"1801",e:"🥤"},
- {n:"エスカルゴのオーブン焼き",c:"1302",e:"🐌"},
- {n:"ハンバーグステーキ",c:"1701",e:"🥩"},
- {n:"ポップコーンシュリンプ",c:"1306",e:"🍤"},
- {n:"白ワイン(デカンタ)",c:"1901",e:"🍷"},
- {n:"ガーリックトースト",c:"1308",e:"🍞"}
-];
-const $=id=>document.getElementById(id);
-const TIME=15000,ROUNDS=10;
-let s,timer,cur,t0,locked;
 
-function show(id){["title","game","result"].forEach(x=>$(x).classList.toggle("hide",x!==id))}
-function best(){try{return +localStorage.getItem("saize-best")||0}catch(e){return 0}}
-function setBest(v){try{localStorage.setItem("saize-best",v)}catch(e){}}
-$("best").textContent=best()?`ハイスコア: ${best()}点`:"";
-
-[1,2,3,4,5,6,7,8,9,"消",0,"注文"].forEach(k=>{
-  const b=document.createElement("button");
-  b.textContent=k;
-  if(k==="消")b.className="del";
-  if(k==="注文")b.className="ok";
-  b.onclick=()=>press(k);
-  $("pad").appendChild(b);
-});
-function press(k){
-  if(locked)return;
-  const i=$("inp");
-  if(k==="消")i.value=i.value.slice(0,-1);
-  else if(k==="注文")submit();
-  else if(i.value.length<4)i.value+=k;
-}
-document.addEventListener("keydown",e=>{
-  if($("game").classList.contains("hide"))return;
-  if(/^\d$/.test(e.key))press(+e.key);
-  else if(e.key==="Backspace")press("消");
-  else if(e.key==="Enter")press("注文");
-});
-
-function start(){
-  s={r:0,score:0,lives:3,ok:0,log:[]};
-  show("game");next();
-}
-function next(){
-  if(s.r>=ROUNDS||s.lives<=0)return end();
-  s.r++;locked=false;
-  cur=MENU[Math.random()*MENU.length|0];
-  const q=1+(Math.random()*3|0);
-  cur.q=q;
-  $("slip").innerHTML=`<b>${cur.n}</b> × ${q}<small>注文番号を入力してください</small>`;
-  $("inp").value="";$("fb").textContent="";$("plate").textContent="📝";
-  hud();
-  t0=Date.now();
-  clearInterval(timer);
-  timer=setInterval(()=>{
-    const left=TIME-(Date.now()-t0);
-    $("bar").style.width=Math.max(0,left/TIME*100)+"%";
-    if(left<=0){clearInterval(timer);judge(null)}
-  },50);
-}
-function hud(){
-  $("round").textContent=`${s.r}/${ROUNDS}品目`;
-  $("score").textContent=`${s.score}点`;
-  $("lives").textContent="❤".repeat(s.lives)+"🖤".repeat(3-s.lives);
-}
-function submit(){
-  const v=$("inp").value;
-  if(!v)return;
-  clearInterval(timer);judge(v);
-}
-function judge(v){
-  locked=true;
-  const fb=$("fb");
-  if(v===cur.c){
-    const bonus=Math.max(0,Math.round((TIME-(Date.now()-t0))/100));
-    s.score+=100+bonus;s.ok++;
-    $("plate").textContent=cur.e;
-    fb.className="fb ok-t";
-    fb.textContent=`正解！ ${cur.n}が${cur.q}つ届きました（+${100+bonus}）`;
-  }else{
-    s.lives--;
-    let got;
-    if(v===null)got={n:"何も",e:"⌛"};
-    else got=MENU.find(m=>m.c===v);
-    $("plate").textContent=got?got.e:"❓";
-    fb.className="fb ng-t shake";
-    if(v===null)fb.textContent=`時間切れ…店員さんが来ません。正解は ${cur.c}`;
-    else if(got)fb.textContent=`${v}は「${got.n}」でした！ 正解は ${cur.c}`;
-    else fb.textContent=`${v}は存在しない番号…店員さんが困惑。正解は ${cur.c}`;
-  }
-  s.log.push(cur.n);
-  hud();
-  setTimeout(next,1800);
-}
-function end(){
-  show("result");
-  const sc=s.score;
-  const rank=s.ok>=ROUNDS?"サイゼ番号マスター 🏆":s.ok>=7?"常連のお客様 🍷":s.ok>=4?"ドリンクバー民 🥤":s.ok>=1?"初来店の学生 🎒":"ただの迷子 🍅";
-  $("rank").textContent=rank;
-  const nb=sc>best();
-  if(nb)setBest(sc);
-  $("sum").innerHTML=`正解 ${s.ok}/${s.r}　スコア <b>${sc}</b>点${nb?" 🎉ハイスコア更新！":""}`;
-  $("best").textContent=`ハイスコア: ${best()}点`;
-}
-$("start").onclick=start;
-$("again").onclick=start;
-</script>
+<script src="sound.js"></script>
+<script src="game.js"></script>
 </body>
 </html>
