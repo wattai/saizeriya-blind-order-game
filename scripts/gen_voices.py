@@ -36,6 +36,7 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--only", nargs="*")
     ap.add_argument("--candidates", type=int, default=1)
+    ap.add_argument("--model", default=MODEL, help="量子化版なら Aratako/Irodori-TTS-v4.1-Small-Quantized/int8-dynamic（CPU では fp32 計算）")
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -43,7 +44,7 @@ def main():
     device = default_runtime_device()
     runtime = InferenceRuntime.from_key(
         RuntimeKey(
-            checkpoint=str(download_hf_checkpoint(MODEL)),
+            checkpoint=str(download_hf_checkpoint(args.model)),
             model_device=device,
             codec_repo=CODEC,
             model_precision="fp32",
