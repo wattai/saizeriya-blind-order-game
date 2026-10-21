@@ -29,6 +29,10 @@
       <h1><span>注文番号</span><em>ノーヒント</em></h1>
       <p class="lead">メニュー表なし。ヒントなし。<br>記憶と勘だけで、4桁の番号を書け。</p>
     </div>
+    <button class="host" id="host" aria-label="店員さんに話しかける">
+      <span class="avatar big"><img src="img/staff_smile.webp" alt="店員さん" width="295" height="400"></span>
+      <span class="bubble">いらっしゃいませ〜！<small>ご注文は<b>番号</b>でおねがいします♪</small></span>
+    </button>
     <div class="sheet tilt" aria-hidden="true">
       <div class="sheet-head">ご注文用紙 <span>No.</span></div>
       <div class="digits demo"><b>?</b><b>?</b><b>?</b><b>?</b></div>
@@ -72,7 +76,10 @@
       <span class="gain">獲得 <b id="pts">+0</b></span>
     </div>
     <div class="digits" id="digits"><b></b><b></b><b></b><b></b></div>
-    <div class="toast" id="toast"></div>
+    <div class="staff">
+      <span class="avatar"><img id="face" src="img/staff_smile.webp" alt="店員さん" width="295" height="400"></span>
+      <div class="toast bubble" id="toast"></div>
+    </div>
 
     <div class="pad" id="pad"></div>
   </section>
@@ -80,7 +87,10 @@
   <!-- 結果 -->
   <section id="result" class="screen hide">
     <p class="kicker">RESULT</p>
-    <h2 class="rank" id="rank"></h2>
+    <div class="rank-row">
+      <h2 class="rank" id="rank"></h2>
+      <span class="avatar"><img id="r-face" src="img/staff_smile.webp" alt="店員さん" width="295" height="400"></span>
+    </div>
     <div class="receipt">
       <div class="r-head">
         <strong>サイゼリヤ（たぶん）</strong>

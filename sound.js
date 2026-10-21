@@ -1,6 +1,7 @@
-// 音（Web Audio で全部合成。音声ファイルなし）
+// 音：BGM・効果音は Web Audio で合成、店員さんボイスは voice/*.mp3（Irodori-TTS で生成）
 const Snd=(()=>{
-  let ctx,master,muted=false,bgmOn=false,step=0,nextT=0,tempo=1,loop;
+  let ctx,master,bgmBus,muted=false,bgmOn=false,step=0,nextT=0,tempo=1,loop,voiceSrc,pending;
+  const voices={},VOICE_KEYS=["welcome","start","order","hint","hurry","ok1","ok2","ok3","combo","ng1","ng2","huh","timeout","great","bye"];
   try{muted=localStorage.getItem("saize-mute")==="1"}catch(e){}
   const hz=m=>440*Math.pow(2,(m-69)/12);
   function init(){
@@ -9,23 +10,33 @@ const Snd=(()=>{
       if(!AC)return false;
       ctx=new AC();master=ctx.createGain();master.connect(ctx.destination);
       master.gain.value=muted?0:.5;
+      bgmBus=ctx.createGain();bgmBus.connect(master);
+      loadVoices();
     }
     if(ctx.state==="suspended")ctx.resume();
     return true;
   }
-  function tone(f,t,d,{type="square",vol=.2,to=null}={}){
+  function tone(f,t,d,{type="square",vol=.2,to=null,dest=master}={}){
     const o=ctx.createOscillator(),g=ctx.createGain();
     o.type=type;o.frequency.setValueAtTime(f,t);
     if(to)o.frequency.exponentialRampToValueAtTime(to,t+d);
     g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
-    o.connect(g).connect(master);o.start(t);o.stop(t+d+.02);
+    o.connect(g).connect(dest);o.start(t);o.stop(t+d+.02);
   }
-  function noise(t,d,vol=.15){
+  function noise(t,d,vol=.15,dest=master){
     const b=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*d),ctx.sampleRate),a=b.getChannelData(0);
     for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1;
     const s=ctx.createBufferSource(),g=ctx.createGain();
     s.buffer=b;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
-    s.connect(g).connect(master);s.start(t);
+    s.connect(g).connect(dest);s.start(t);
+  }
+  function loadVoices(){
+    VOICE_KEYS.forEach(k=>fetch(`voice/${k}.mp3`).then(r=>r.arrayBuffer())
+      .then(b=>new Promise((ok,ng)=>ctx.decodeAudioData(b,ok,ng))).then(buf=>{
+        voices[k]=buf;
+        // 読み込み前に呼ばれたセリフは、すぐ読み込めたら遅れて再生する
+        if(pending&&pending.key===k&&ctx.currentTime-pending.at<1.5)S.voice(k);
+      }).catch(()=>{}));
   }
   // 6/8 のタランテラ風（イ短調）。0 は休符
   const MEL=[69,76,76,76,74,72, 71,72,74,72,71,69, 68,71,76,76,74,71, 69,72,71,69,64,64,
@@ -35,10 +46,10 @@ const Snd=(()=>{
     const len=60/150/2/tempo;
     while(nextT<ctx.currentTime+.15){
       const i=step%MEL.length,m=MEL[i],b=BASS[(i/6|0)%8];
-      if(m)tone(hz(m),nextT,len*.9,{vol:.07});
-      if(i%3===0)tone(hz(b+(i%6?7:0)),nextT,len*1.8,{type:"triangle",vol:.18});
-      if(i%6===0)tone(150,nextT,.1,{type:"sine",vol:.25,to:50});
-      if(i%6===3)noise(nextT,.05,.06);
+      if(m)tone(hz(m),nextT,len*.9,{vol:.07,dest:bgmBus});
+      if(i%3===0)tone(hz(b+(i%6?7:0)),nextT,len*1.8,{type:"triangle",vol:.18,dest:bgmBus});
+      if(i%6===0)tone(150,nextT,.1,{type:"sine",vol:.25,to:50,dest:bgmBus});
+      if(i%6===3)noise(nextT,.05,.06,bgmBus);
       nextT+=len;step++;
     }
   }
@@ -55,7 +66,19 @@ const Snd=(()=>{
       clearInterval(loop);bgmOn=on;
       if(on){step=0;tempo=1;nextT=ctx.currentTime+.05;loop=setInterval(sched,40);sched()}
     },
+    warm(){init()},
     tempo(x){tempo=x},
+    // 店員さんボイス。再生中はBGMを下げる。delay秒後に再生
+    voice(key,delay=0){
+      if(!init())return;
+      if(!voices[key]){pending={key,at:ctx.currentTime};return}
+      pending=null;
+      if(voiceSrc)try{voiceSrc.stop()}catch(e){}
+      const t=ctx.currentTime+delay,src=ctx.createBufferSource(),g=ctx.createGain(),d=voices[key].duration;
+      src.buffer=voices[key];g.gain.value=1.6;src.connect(g).connect(master);src.start(t);voiceSrc=src;
+      bgmBus.gain.cancelScheduledValues(ctx.currentTime);
+      bgmBus.gain.setTargetAtTime(.35,t,.05);bgmBus.gain.setTargetAtTime(1,t+d,.2);
+    },
     key(){if(init())tone(1200,ctx.currentTime,.05,{vol:.1})},
     // 呼び出しベル「ピンポーン」
     bell(){if(!init())return;const t=ctx.currentTime;

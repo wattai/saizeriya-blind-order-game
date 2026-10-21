@@ -8,6 +8,13 @@ const EMOJI={
   1405:"🐌",2328:"🦑",1425:"🫛",2305:"🍝",2304:"🍅",1402:"🍢",1452:"🍢",3201:"🍰",3901:"🍰",
   3401:"🍷",3402:"🥂",3413:"🍾",3412:"🍷",3414:"🍷",3415:"🥂",3416:"🍷",3419:"🍷"
 };
+// 料理のイラスト（いらすとや）。無いものは絵文字
+const IMG={
+  2101:"gratin",1202:"salad",1425:"salad",1401:"chicken",2402:"chicken",2203:"pizza",2204:"pizza",
+  1307:"onion_soup",1305:"minestrone",2301:"pasta_tarako",2305:"pasta_carbonara",2304:"pasta_tomato",
+  2406:"hamburg",2407:"hamburg",3206:"pudding",3906:"pudding",5101:"drinkbar",5102:"drinkbar",5103:"drinkbar",
+  3401:"wine",3402:"wine",3413:"wine",3412:"wine",3414:"wine",3415:"wine",3416:"wine",3419:"wine"
+};
 let MENU=[],meta={},s,timer,cur,t0,locked=true;
 
 const yen=n=>"¥"+n.toLocaleString("ja-JP");
@@ -16,14 +23,21 @@ function show(id){["title","game","result"].forEach(x=>$(x).classList.toggle("hi
 function best(){try{return +localStorage.getItem("saize-best")||0}catch(e){return 0}}
 function setBest(v){try{localStorage.setItem("saize-best",v)}catch(e){}}
 function restart(el,cls){el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls)}
+const pic=m=>m.img?`<img src="img/${m.img}.webp" alt="">`:m.e;
+const pick=a=>a[Math.random()*a.length|0];
+// 店員さんの表情とセリフ
+function face(name,el=$("face")){el.src=`img/staff_${name}.webp`;restart(el.parentNode,"talk")}
+function say(html,cls=""){const t=$("toast");t.className="toast bubble "+cls;t.innerHTML=html}
 $("best").textContent=best();
 
 // ---- メニュー読み込み（scripts/fetch_menu.py で公式サイトから生成） ----
 fetch("menu.json").then(r=>r.json()).then(d=>{
   meta=d;
-  MENU=d.items.map(m=>({...m,e:EMOJI[m.code]||"🍽️"}));
+  MENU=d.items.map(m=>({...m,e:EMOJI[m.code]||"🍽️",img:IMG[m.code]}));
+  new Set(Object.values(IMG)).forEach(n=>{new Image().src=`img/${n}.webp`});
+  ["laugh","cry","angry"].forEach(n=>{new Image().src=`img/staff_${n}.webp`});
   $("count").textContent=MENU.length+"品";
-  $("note").innerHTML=`番号データ: <a href="${d.source}" target="_blank" rel="noopener">サイゼリヤ公式サイト「人気メニュー」</a>より取得（${d.fetched}）。<br>非公式ファンゲーム。番号は店舗・時期により異なる場合があります。`;
+  $("note").innerHTML=`番号データ: <a href="${d.source}" target="_blank" rel="noopener">サイゼリヤ公式サイト「人気メニュー」</a>より取得（${d.fetched}）。<br>イラスト: <a href="https://www.irasutoya.com/" target="_blank" rel="noopener">いらすとや</a> ／ 店員さんボイス: <a href="https://huggingface.co/Aratako/Irodori-TTS-v4.1-Small" target="_blank" rel="noopener">Irodori-TTS</a> によるAI合成音声<br>非公式ファンゲーム。番号は店舗・時期により異なる場合があります。`;
   $("start").disabled=false;$("start").textContent="注文をはじめる";
 }).catch(()=>{$("start").textContent="メニューを読み込めませんでした"});
 
@@ -73,6 +87,8 @@ function reveal(){
   shown[i]=true;Snd.reveal();
   renderDigits();restart($("digits").children[i],"flip");
   $("hints").textContent=`ヒント ${revealed()}/4`;
+  if(revealed()===1){say("ヒント、出しちゃいますね♪");if(Math.random()<.5)Snd.voice("hint")}
+  if(revealed()===4)say("もう全部見えてますよ〜！");
 }
 function press(k){
   if(locked)return;
@@ -92,7 +108,7 @@ document.addEventListener("keydown",e=>{
 // ---- 進行 ----
 function start(){
   s={r:0,score:0,lives:LIVES,ok:0,combo:0,bill:[]};
-  show("game");Snd.bgm(true);next();
+  show("game");Snd.bgm(true);Snd.voice("start");next();
 }
 function next(){
   if(s.r>=ROUNDS||s.lives<=0)return end();
@@ -107,7 +123,10 @@ function next(){
   $("price").textContent=yen(cur.price);
   restart($("ticket"),"in");
   $("plate").textContent="🍽️";$("plate").classList.remove("arrive");
-  $("digits").className="digits";$("toast").className="toast";$("toast").textContent="";
+  $("digits").className="digits";
+  face("smile");
+  if(s.r===1)say("ご注文は<b>番号</b>でおねがいしまーす！");
+  else{say("ご注文、どうぞ〜♪");if(Math.random()<.35)Snd.voice("order")}
   renderDigits();hud();
   t0=Date.now();
   let lastSec=99;
@@ -122,6 +141,7 @@ function next(){
     Snd.tempo(1+(1-r)*.8);
     const sec=Math.ceil(left/1000);
     if(sec<=3&&sec>0&&sec<lastSec)Snd.tick();
+    if(sec===3&&lastSec>3){Snd.voice("hurry");say("お急ぎくださ〜い！")}
     lastSec=sec;
     if(left<=0){clearInterval(timer);judge(null)}
   },50);
@@ -136,32 +156,30 @@ function submit(){
   if(entry.length<4){restart($("digits"),"shake");return}
   clearInterval(timer);Snd.bell();judge(entry);
 }
-function deliver(m,q){$("plate").textContent=m?m.e:"❓";restart($("plate"),"arrive");if(m)s.bill.push({m,q,ok:m.code===cur.code})}
+function deliver(m,q){$("plate").innerHTML=m?pic(m):"❓";restart($("plate"),"arrive");if(m)s.bill.push({m,q,ok:m.code===cur.code})}
 function judge(v){
   locked=true;renderDigits();
   Snd.tempo(1);
-  const t=$("toast");
   if(v===cur.code){
     const pts=points(Date.now()-t0);
     s.combo++;s.ok++;
     s.score+=pts;
     Snd.ok();deliver(cur,cur.q);
+    face("laugh");Snd.voice(s.combo>=2?"combo":pick(["ok1","ok2","ok3"]),.7);
     $("digits").className="digits ok";
-    t.className="toast ok";
-    t.innerHTML=`正解！ ${label(cur)}が${cur.q}つ届きました <b>+${pts}</b>`;
+    say(`正解！ ${label(cur)}が${cur.q}つ届きました <b>+${pts}</b>`,"ok");
     setTimeout(()=>burst(),450);
   }else{
     s.lives--;s.combo=0;
     const got=v&&MENU.find(m=>m.code===v);
-    if(v===null){Snd.timeout();deliver(null)}
-    else if(got){Snd.ng();deliver(got,cur.q)}
-    else{Snd.huh();deliver(null)}
+    if(v===null){Snd.timeout();deliver(null);face("angry");Snd.voice("timeout",.4)}
+    else if(got){Snd.ng();deliver(got,cur.q);face("cry");Snd.voice(pick(["ng1","ng2"]),.7)}
+    else{Snd.huh();deliver(null);face("cry");Snd.voice("huh",.7)}
     entry=v||"";renderDigits();
     $("digits").className="digits ng";restart($("digits"),"shake");
-    t.className="toast ng";
-    t.innerHTML=v===null?`時間切れ…店員さんが来ません。正解は <b>${cur.code}</b>`
-      :got?`${v}は「${label(got)}」でした！ 正解は <b>${cur.code}</b>`
-      :`${v}は存在しない番号…店員さん困惑。正解は <b>${cur.code}</b>`;
+    say(v===null?`お客様〜？ 時間切れです。正解は <b>${cur.code}</b>`
+      :got?`${v}は「${label(got)}」ですよ〜！ 正解は <b>${cur.code}</b>`
+      :`${v}…？ そんな番号ないです…。正解は <b>${cur.code}</b>`,"ng");
   }
   hud();
   setTimeout(next,2200);
@@ -172,12 +190,14 @@ function end(){
   Snd.bgm(false);
   const good=s.ok>=7;
   if(good){Snd.fanfare();setTimeout(()=>{burst(90,innerWidth*.25,innerHeight*.3);burst(90,innerWidth*.75,innerHeight*.3)},300)}else Snd.sad();
+  Snd.voice(good?"great":"bye",good?1.3:2.7);
+  face(good?"laugh":s.ok>=4?"smile":"cry",$("r-face"));
   const rank=s.ok>=ROUNDS?"サイゼ番号マスター 🏆":s.ok>=7?"常連のお客様 🍷":s.ok>=4?"ドリンクバー民 🥤":s.ok>=1?"初来店の学生 🎒":"ただの迷子 🍅";
   $("rank").textContent=rank;
   const total=s.bill.reduce((a,b)=>a+b.m.price*b.q,0);
   const miss=s.bill.filter(b=>!b.ok).length;
   $("r-items").innerHTML=s.bill.length?s.bill.map(b=>
-    `<li class="${b.ok?"":"miss"}"><span class="c">${b.m.code}</span><span>${b.m.e} ${label(b.m)} ×${b.q}${b.ok?"":"（誤）"}</span><span>${yen(b.m.price*b.q)}</span></li>`).join("")
+    `<li class="${b.ok?"":"miss"}"><span class="c">${b.m.code}</span><span><span class="e">${pic(b.m)}</span> ${label(b.m)} ×${b.q}${b.ok?"":"（誤）"}</span><span>${yen(b.m.price*b.q)}</span></li>`).join("")
     :`<li class="none"><span></span><span>何も届きませんでした</span><span></span></li>`;
   $("r-total").textContent=yen(total);
   $("r-ok").textContent=`${s.ok} / ${s.r}`;
@@ -197,6 +217,8 @@ function share(){
 }
 
 $("start").onclick=start;
+$("host").onclick=()=>{Snd.voice("welcome");face("smile",$("host").querySelector("img"))};
+document.addEventListener("pointerdown",()=>Snd.warm(),{once:true});
 $("again").onclick=start;
 $("share").onclick=share;
 $("mute").textContent=Snd.muted?"🔇":"🔊";
