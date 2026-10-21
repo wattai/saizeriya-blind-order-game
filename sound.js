@@ -73,6 +73,9 @@ const Snd=(()=>{
       o.connect(g).connect(master);o.start(t);l.start(t);o.stop(t+.85);l.stop(t+.85)},
     timeout(){if(!init())return;const t=ctx.currentTime;
       tone(hz(64),t,1.2,{type:"sine",vol:.3});tone(hz(76),t,1.2,{type:"sine",vol:.1})},
+    // ヒントが1桁めくれる音
+    reveal(){if(!init())return;const t=ctx.currentTime;
+      tone(hz(88),t,.12,{type:"triangle",vol:.12});tone(hz(95),t+.06,.18,{type:"triangle",vol:.1})},
     tick(){if(init())tone(2000,ctx.currentTime,.03,{type:"square",vol:.08})},
     fanfare(){if(!init())return;const t=ctx.currentTime;
       [[72,0],[72,.12],[72,.24],[76,.36],[79,.6],[84,.84]].forEach(([m,d],i)=>

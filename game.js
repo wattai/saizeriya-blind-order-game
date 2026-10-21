@@ -1,5 +1,7 @@
 const $=id=>document.getElementById(id);
 const TIME=15000,ROUNDS=10,LIVES=3,RING=339.3;
+// 3秒ごとに番号が1桁ずつ見えてくる。見えている桁が少ないほど倍率が高い
+const REVEAL_EVERY=3000,HINT_MULT=[3,2,1.4,.8,.4];
 const EMOJI={
   2101:"🍛",1202:"🥗",1401:"🍗",2203:"🍕",2402:"🍗",1307:"🧅",2301:"🍝",2406:"🍖",1403:"🥬",2303:"🌶️",
   3206:"🍮",3906:"🍮",5101:"🥤",5102:"🧃",5103:"🥤",1410:"🦪",2407:"🍖",2204:"🍄",1305:"🥣",1302:"🎃",
@@ -53,12 +55,24 @@ const keyEls={};
   b.onclick=()=>press(k);
   keyEls[k]=b;$("pad").appendChild(b);
 });
-let entry="";
+let entry="",shown=[],order=[];
 function renderDigits(){
   [...$("digits").children].forEach((el,i)=>{
-    el.textContent=entry[i]||"";
+    const hint=!entry[i]&&shown[i]&&!locked;
+    el.textContent=entry[i]||(hint?cur.code[i]:"");
+    el.classList.toggle("hint",!!hint);
     el.classList.toggle("cur",i===entry.length&&!locked);
   });
+}
+const revealed=()=>shown.filter(Boolean).length;
+function points(elapsed){
+  return Math.round((100+Math.max(0,TIME-elapsed)/50)*HINT_MULT[revealed()])+Math.max(0,s.combo)*50;
+}
+function reveal(){
+  const i=order[revealed()];
+  shown[i]=true;Snd.reveal();
+  renderDigits();restart($("digits").children[i],"flip");
+  $("hints").textContent=`ヒント ${revealed()}/4`;
 }
 function press(k){
   if(locked)return;
@@ -84,6 +98,9 @@ function next(){
   if(s.r>=ROUNDS||s.lives<=0)return end();
   s.r++;locked=false;entry="";
   cur={...MENU[Math.random()*MENU.length|0],q:1+(Math.random()*3|0)};
+  shown=[false,false,false,false];
+  order=[0,1,2,3].sort(()=>Math.random()-.5);
+  $("hints").textContent="ノーヒント";
   $("dish").textContent=cur.name;
   $("variant").textContent=cur.variant;
   $("qty").textContent=cur.q;
@@ -96,7 +113,9 @@ function next(){
   let lastSec=99;
   clearInterval(timer);
   timer=setInterval(()=>{
-    const left=Math.max(0,TIME-(Date.now()-t0)),r=left/TIME;
+    const el=Date.now()-t0,left=Math.max(0,TIME-el),r=left/TIME;
+    while(revealed()<Math.min(4,el/REVEAL_EVERY|0))reveal();
+    $("pts").textContent="+"+points(el);
     $("ring").style.strokeDashoffset=RING*(1-r);
     $("ring").style.stroke=r>.5?"var(--green)":r>.2?"var(--gold)":"var(--red)";
     // 残り時間が減るほどBGMが速くなる
@@ -123,8 +142,8 @@ function judge(v){
   Snd.tempo(1);
   const t=$("toast");
   if(v===cur.code){
+    const pts=points(Date.now()-t0);
     s.combo++;s.ok++;
-    const pts=100+Math.round((TIME-(Date.now()-t0))/100)+(s.combo-1)*50;
     s.score+=pts;
     Snd.ok();deliver(cur,cur.q);
     $("digits").className="digits ok";

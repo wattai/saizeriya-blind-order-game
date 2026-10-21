@@ -39,7 +39,7 @@
       <div><small>収録メニュー</small><strong id="count">–</strong></div>
     </div>
     <button id="start" class="cta" disabled>読み込み中…</button>
-    <p class="rules">全10品 ・ 1品15秒 ・ ミス3回で退店<br>間違えると<b>その番号の料理</b>が届きます</p>
+    <p class="rules">全10品 ・ 1品15秒 ・ ミス3回で退店<br>3秒ごとに番号が1桁ずつ見えてくる。<b>早く答えるほど高得点</b><br>間違えると<b>その番号の料理</b>が届きます</p>
   </section>
 
   <!-- ゲーム -->
@@ -67,6 +67,10 @@
       </div>
     </div>
 
+    <div class="meter">
+      <span id="hints" class="hints">ノーヒント</span>
+      <span class="gain">獲得 <b id="pts">+0</b></span>
+    </div>
     <div class="digits" id="digits"><b></b><b></b><b></b><b></b></div>
     <div class="toast" id="toast"></div>
 
