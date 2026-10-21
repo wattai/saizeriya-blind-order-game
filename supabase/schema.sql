@@ -19,3 +19,5 @@ create policy "scores are public" on public.scores for select to anon using (tru
 drop policy if exists "anyone can submit" on public.scores;
 create policy "anyone can submit" on public.scores for insert to anon with check (created_at > now() - interval '1 minute');
 grant select, insert on public.scores to anon;
+-- Supabase は既定で anon に全権限を付けるので、更新・削除の権限も明示的に外す（RLS でも防がれている）
+revoke update, delete, truncate on public.scores from anon, authenticated;
