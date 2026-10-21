@@ -43,6 +43,7 @@
       <div><small>収録メニュー</small><strong id="count">–</strong></div>
     </div>
     <button id="start" class="cta" disabled>読み込み中…</button>
+    <button id="to-rank" class="ghost rank-btn">🏆 ランキングを見る</button>
     <p class="rules">全10品 ・ 1品15秒 ・ ミス3回で退店<br>3秒ごとに番号が1桁ずつ見えてくる。<b>早く答えるほど高得点</b><br>間違えると<b>その番号の料理</b>が届きます</p>
   </section>
 
@@ -102,15 +103,42 @@
       <div class="r-row"><span>SCORE</span><span id="r-score"></span></div>
       <p class="r-msg" id="r-msg"></p>
     </div>
+    <form id="entry" class="entry" autocomplete="off">
+      <label for="name" id="entry-label">ランキングに登録</label>
+      <div class="entry-row">
+        <input id="name" maxlength="12" placeholder="ニックネーム（12文字まで）" required>
+        <button id="entry-btn" class="entry-btn">登録</button>
+      </div>
+      <p id="entry-msg" class="entry-msg"></p>
+    </form>
     <div class="actions">
       <button id="again" class="cta">もう一度注文する</button>
-      <button id="share" class="ghost">結果をシェア</button>
+      <div class="actions-2">
+        <button id="r-rank" class="ghost">🏆 ランキング</button>
+        <button id="share" class="ghost">結果をシェア</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ランキング -->
+  <section id="ranking" class="screen hide">
+    <p class="kicker">RANKING</p>
+    <h2 class="rank-title" id="rank-title">全国ランキング</h2>
+    <div class="tabs" role="tablist">
+      <button class="tab on" data-period="all" role="tab" aria-selected="true">全期間</button>
+      <button class="tab" data-period="today" role="tab" aria-selected="false">今日</button>
+    </div>
+    <ol class="board" id="board"></ol>
+    <div class="actions">
+      <button id="rank-back" class="ghost">もどる</button>
     </div>
   </section>
 
   <footer class="note" id="note">非公式ファンゲーム。番号は店舗・時期により異なる場合があります。</footer>
 </main>
 
+<script src="config.js"></script>
+<script src="ranking.js"></script>
 <script src="sound.js"></script>
 <script src="game.js"></script>
 </body>
