@@ -1,0 +1,228 @@
+{
+ "source": "https://www.saizeriya.co.jp/menu-popular/",
+ "fetched": "2026-10-21",
+ "items": [
+  {
+   "code": "2101",
+   "name": "ミラノ風ドリア",
+   "variant": "",
+   "price": 300
+  },
+  {
+   "code": "1202",
+   "name": "小エビのサラダ",
+   "variant": "",
+   "price": 350
+  },
+  {
+   "code": "1401",
+   "name": "辛味チキン",
+   "variant": "",
+   "price": 300
+  },
+  {
+   "code": "2203",
+   "name": "バッファローモッツァレラのマルゲリータピザ",
+   "variant": "",
+   "price": 400
+  },
+  {
+   "code": "2402",
+   "name": "若鶏のディアボラ風",
+   "variant": "",
+   "price": 500
+  },
+  {
+   "code": "1307",
+   "name": "たまねぎのズッパ",
+   "variant": "",
+   "price": 300
+  },
+  {
+   "code": "2301",
+   "name": "タラコソースシシリー風",
+   "variant": "",
+   "price": 400
+  },
+  {
+   "code": "2406",
+   "name": "ハンバーグステーキ",
+   "variant": "",
+   "price": 400
+  },
+  {
+   "code": "1403",
+   "name": "ほうれん草のソテー",
+   "variant": "",
+   "price": 200
+  },
+  {
+   "code": "2303",
+   "name": "ペペロンチーノ",
+   "variant": "",
+   "price": 300
+  },
+  {
+   "code": "3206",
+   "name": "イタリアンプリン",
+   "variant": "すぐに",
+   "price": 250
+  },
+  {
+   "code": "3906",
+   "name": "イタリアンプリン",
+   "variant": "あとで",
+   "price": 250
+  },
+  {
+   "code": "5101",
+   "name": "セットドリンクバー",
+   "variant": "",
+   "price": 200
+  },
+  {
+   "code": "5102",
+   "name": "セットドリンクバー",
+   "variant": "キッズ",
+   "price": 100
+  },
+  {
+   "code": "5103",
+   "name": "セットドリンクバー",
+   "variant": "単品",
+   "price": 300
+  },
+  {
+   "code": "1410",
+   "name": "ムール貝のガーリック焼き",
+   "variant": "",
+   "price": 400
+  },
+  {
+   "code": "2407",
+   "name": "ディアボラ風ハンバーグ",
+   "variant": "",
+   "price": 500
+  },
+  {
+   "code": "2204",
+   "name": "野菜ときのこのピザ",
+   "variant": "",
+   "price": 400
+  },
+  {
+   "code": "1305",
+   "name": "田舎風ミネストローネ",
+   "variant": "",
+   "price": 300
+  },
+  {
+   "code": "1302",
+   "name": "冷たいパンプキンスープ",
+   "variant": "",
+   "price": 180
+  },
+  {
+   "code": "1405",
+   "name": "エスカルゴのオーブン焼き",
+   "variant": "",
+   "price": 400
+  },
+  {
+   "code": "2328",
+   "name": "イカの墨入りセピアソース",
+   "variant": "",
+   "price": 500
+  },
+  {
+   "code": "1425",
+   "name": "柔らか青豆の温サラダ",
+   "variant": "",
+   "price": 200
+  },
+  {
+   "code": "2305",
+   "name": "カルボナーラ",
+   "variant": "",
+   "price": 500
+  },
+  {
+   "code": "2304",
+   "name": "パルマ風スパゲッティ",
+   "variant": "",
+   "price": 400
+  },
+  {
+   "code": "1402",
+   "name": "アロスティチーニ",
+   "variant": "",
+   "price": 400
+  },
+  {
+   "code": "1452",
+   "name": "アロスティチーニ",
+   "variant": "Wサイズ",
+   "price": 800
+  },
+  {
+   "code": "3201",
+   "name": "ティラミス クラシコ",
+   "variant": "すぐに",
+   "price": 300
+  },
+  {
+   "code": "3901",
+   "name": "ティラミス クラシコ",
+   "variant": "あとで",
+   "price": 300
+  },
+  {
+   "code": "3401",
+   "name": "グラスワイン",
+   "variant": "赤",
+   "price": 100
+  },
+  {
+   "code": "3402",
+   "name": "グラスワイン",
+   "variant": "白",
+   "price": 100
+  },
+  {
+   "code": "3413",
+   "name": "ドンラファエロ",
+   "variant": "白・発泡 / 辛口",
+   "price": 1100
+  },
+  {
+   "code": "3412",
+   "name": "ランブルスコロゼ",
+   "variant": "ロゼ・微発泡 / 甘口",
+   "price": 1100
+  },
+  {
+   "code": "3414",
+   "name": "ランブルスコセッコ",
+   "variant": "赤・微発泡 / 辛口",
+   "price": 1100
+  },
+  {
+   "code": "3415",
+   "name": "ベルデッキオ",
+   "variant": "白 / 辛口",
+   "price": 1100
+  },
+  {
+   "code": "3416",
+   "name": "キャンティ",
+   "variant": "赤 / 辛口",
+   "price": 1100
+  },
+  {
+   "code": "3419",
+   "name": "キャンティルフィナ",
+   "variant": "赤 / 辛口 フルボディ",
+   "price": 2200
+  }
+ ]
+}
