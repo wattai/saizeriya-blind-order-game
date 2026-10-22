@@ -1,6 +1,8 @@
-// 音：BGM・効果音は Web Audio で合成、店員さんボイスは voice/*.mp3（Irodori-TTS で生成）
+// 音：BGM は bgm/*.mp3（甘茶の音楽工房）、効果音は Web Audio で合成、店員さんボイスは voice/*.mp3（Irodori-TTS で生成）
+// BGM ファイルを再生できないときは合成BGMにフォールバックする
 const Snd=(()=>{
-  let ctx,master,bgmBus,muted=false,bgmOn=false,step=0,nextT=0,tempo=1,loop,voiceSrc,pending;
+  let ctx,master,bgmBus,muted=false,bgmOn=false,step=0,nextT=0,tempo=1,loop,voiceSrc,pending,current=null,rate=1;
+  const tracks={},MUSIC_VOL=.55;
   const voices={},VOICE_KEYS=["welcome","start","order","hint","hurry","ok1","ok2","ok3","combo","ng1","ng2","huh","timeout","great","bye"];
   try{muted=localStorage.getItem("saize-mute")==="1"}catch(e){}
   const hz=m=>440*Math.pow(2,(m-69)/12);
@@ -53,6 +55,16 @@ const Snd=(()=>{
       nextT+=len;step++;
     }
   }
+  // BGM ファイル。<audio> を Web Audio に通すので、ボイス中の音量ダウンやミュートが効き、速度を上げても音程は変わらない
+  function track(name){
+    if(!tracks[name]){
+      const a=new Audio(`bgm/${name}.mp3`),g=ctx.createGain();
+      a.loop=true;a.preload="auto";g.gain.value=0;
+      ctx.createMediaElementSource(a).connect(g).connect(bgmBus);
+      tracks[name]={a,g};
+    }
+    return tracks[name];
+  }
   const S={
     get muted(){return muted},
     toggle(){
@@ -67,7 +79,24 @@ const Snd=(()=>{
       if(on){step=0;tempo=1;nextT=ctx.currentTime+.05;loop=setInterval(sched,40);sched()}
     },
     warm(){init()},
-    tempo(x){tempo=x},
+    // name の曲に切り替える（null で止める）
+    music(name){
+      if(!init()||name===current)return;
+      const now=ctx.currentTime;
+      if(current){const was=current,o=tracks[was];o.g.gain.setTargetAtTime(0,now,.15);setTimeout(()=>{if(current!==was)o.a.pause()},800)}
+      current=name;
+      if(!name)return;
+      const t=track(name);
+      rate=1;t.a.playbackRate=1;t.a.currentTime=0;
+      t.g.gain.cancelScheduledValues(now);t.g.gain.setTargetAtTime(MUSIC_VOL,now,.1);
+      t.a.play().catch(()=>{if(current===name&&name==="play")S.bgm(true)});
+    },
+    tempo(x){
+      tempo=x;
+      // BGM ファイルは段階的に速くする
+      const r=x>=1.6?1.25:x>=1.4?1.12:1;
+      if(current&&r!==rate){rate=r;tracks[current].a.playbackRate=r}
+    },
     // 店員さんボイス。再生中はBGMを下げる。delay秒後に再生
     voice(key,delay=0){
       if(!init())return;
