@@ -15,7 +15,7 @@ const IMG={
   2406:"hamburg",2407:"hamburg",3206:"pudding",3906:"pudding",5101:"drinkbar",5102:"drinkbar",5103:"drinkbar",
   3401:"wine",3402:"wine",3413:"wine",3412:"wine",3414:"wine",3415:"wine",3416:"wine",3419:"wine"
 };
-let MENU=[],meta={},s,timer,cur,t0,locked=true;
+let MENU=[],meta={},s,timer,cur,t0,locked=true,titleMusic;
 
 const yen=n=>"¥"+n.toLocaleString("ja-JP");
 const label=m=>m.name+(m.variant?`（${m.variant}）`:"");
@@ -37,7 +37,7 @@ fetch("menu.json").then(r=>r.json()).then(d=>{
   new Set(Object.values(IMG)).forEach(n=>{new Image().src=`img/${n}.webp`});
   ["laugh","cry","angry"].forEach(n=>{new Image().src=`img/staff_${n}.webp`});
   $("count").textContent=MENU.length+"品";
-  $("note").innerHTML=`番号データ: <a href="${d.source}" target="_blank" rel="noopener">サイゼリヤ公式サイト「人気メニュー」</a>より取得（${d.fetched}）。<br>イラスト: <a href="https://www.irasutoya.com/" target="_blank" rel="noopener">いらすとや</a> ／ 店員さんボイス: <a href="https://huggingface.co/Aratako/Irodori-TTS-v4.1-Small" target="_blank" rel="noopener">Irodori-TTS</a> によるAI合成音声<br>非公式ファンゲーム。番号は店舗・時期により異なる場合があります。`;
+  $("note").innerHTML=`番号データ: <a href="${d.source}" target="_blank" rel="noopener">サイゼリヤ公式サイト「人気メニュー」</a>より取得（${d.fetched}）。<br>BGM: <a href="https://amachamusic.chagasi.com/" target="_blank" rel="noopener">甘茶の音楽工房</a> ／ イラスト: <a href="https://www.irasutoya.com/" target="_blank" rel="noopener">いらすとや</a><br>店員さんボイス: <a href="https://huggingface.co/Aratako/Irodori-TTS-v4.1-Small" target="_blank" rel="noopener">Irodori-TTS</a> によるAI合成音声<br>非公式ファンゲーム。番号は店舗・時期により異なる場合があります。`;
   $("start").disabled=false;$("start").textContent="注文をはじめる";
 }).catch(()=>{$("start").textContent="メニューを読み込めませんでした"});
 
@@ -108,7 +108,8 @@ document.addEventListener("keydown",e=>{
 // ---- 進行 ----
 function start(){
   s={r:0,score:0,lives:LIVES,ok:0,combo:0,bill:[]};
-  show("game");Snd.bgm(true);Snd.voice("start");next();
+  clearTimeout(titleMusic);
+  show("game");Snd.music("play");Snd.voice("start");next();
 }
 function next(){
   if(s.r>=ROUNDS||s.lives<=0)return end();
@@ -187,7 +188,9 @@ function judge(v){
 function end(){
   clearInterval(timer);
   show("result");
-  Snd.bgm(false);
+  Snd.bgm(false);Snd.music(null);
+  // ファンファーレとボイスが終わったらタイトルの曲に戻す
+  titleMusic=setTimeout(()=>Snd.music("title"),4000);
   const good=s.ok>=7;
   if(good){Snd.fanfare();setTimeout(()=>{burst(90,innerWidth*.25,innerHeight*.3);burst(90,innerWidth*.75,innerHeight*.3)},300)}else Snd.sad();
   Snd.voice(good?"great":"bye",good?1.3:2.7);
@@ -219,7 +222,8 @@ function share(){
 
 $("start").onclick=start;
 $("host").onclick=()=>{Snd.voice("welcome");face("smile",$("host").querySelector("img"))};
-document.addEventListener("pointerdown",()=>Snd.warm(),{once:true});
+// タイトルの曲は最初のタップから（ブラウザは操作前の自動再生を許さない）
+document.addEventListener("pointerdown",()=>{Snd.warm();if($("game").classList.contains("hide"))Snd.music("title")},{once:true});
 $("again").onclick=start;
 $("share").onclick=share;
 
